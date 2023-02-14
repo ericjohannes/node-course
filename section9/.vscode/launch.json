@@ -18,6 +18,7 @@
             "request": "launch",
             "name": "nodemon",
             "runtimeExecutable": "${workspaceFolder}/node_modules/nodemon/bin/nodemon.js",
+            "runtimeArgs": ["--ignore", "*json"],
             "program": "${workspaceFolder}/app.js",
             "restart": false,
             "console": "integratedTerminal",

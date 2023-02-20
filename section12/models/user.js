@@ -53,15 +53,22 @@ userSchema.methods.removeFromCart = function(productId){
 }
 
 userSchema.methods.addOrder = function(){
-    const order = new Order({
-        items: this.cart.items,
-        user: {userId: this._id, email: this.email, name: this.name},
-    })
-    return order.save().then(()=>{
-        this.cart = {items: []};
-        this.save()
+    return this.populate('cart.items.productId')
+        .execPopulate()
+        .then(user=>{
+            const products = user.cart.items.map(i=>{
+                return {quantity: i.quantity, product: i.productId}
+            })
+            const order = new Order({
+                items: products,
+                user: {userId: this._id, email: this.email, name: this.name},
+            })
+            return order.save().then(()=>{
+                this.cart = {items: []};
+                this.save()
 
-    })
+            })
+        })
 }
 
 module.exports = mongoose.model('User', userSchema);

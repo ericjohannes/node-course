@@ -52,6 +52,10 @@ userSchema.methods.removeFromCart = function(productId){
     return this.save();
 }
 
+userSchema.methods.clearCart = function(){
+    this.cart = {items: []};
+}
+
 userSchema.methods.addOrder = function(){
     return this.populate('cart.items.productId')
         .execPopulate()
@@ -64,8 +68,8 @@ userSchema.methods.addOrder = function(){
                 user: {userId: this._id, email: this.email, name: this.name},
             })
             return order.save().then(()=>{
-                this.cart = {items: []};
-                this.save()
+                this.clearCart();
+                return this.save();
 
             })
         })

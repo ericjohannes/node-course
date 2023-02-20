@@ -57,7 +57,7 @@ userSchema.methods.clearCart = function(){
 }
 
 userSchema.methods.addOrder = function(){
-    return this.populate('cart.items.productId')
+    return this.populate('cart.items.productId')  // get all product data
         .execPopulate()
         .then(user=>{
             const products = user.cart.items.map(i=>{

@@ -57,7 +57,7 @@ userSchema.methods.addOrder = function(){
         .execPopulate()
         .then(user=>{
             const products = user.cart.items.map(i=>{
-                return {quantity: i.quantity, product: i.productId}
+                return {quantity: i.quantity, product: {...i.productId._doc}} //_doc accesses only data in there
             })
             const order = new Order({
                 items: products,

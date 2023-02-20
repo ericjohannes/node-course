@@ -1,3 +1,70 @@
+const mongoose = require('mongoose');
+const Order = require('./order');
+
+const Schema = mongoose.Schema;
+const userSchema = new Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+    },
+    cart: {
+        items: [
+            {
+                productId: {type: Schema.Types.ObjectId, ref: 'Product', required: true}, 
+                quantity: {type: Number, required: true }
+            }
+        ]
+    }
+})
+
+userSchema.methods.addToCart = function(product){
+    const cartProductIndex = this.cart.items.findIndex(cp=>{
+        return cp.productId.toString() ===  product._id.toString()
+    });
+    let newQuantity = 1;
+    const updatedCartItems = [...this.cart.items];
+  
+    // if it's in the cart add to quantity
+    if(cartProductIndex >= 0){
+        newQuantity = this.cart.items[cartProductIndex].quantity + 1;
+        updatedCartItems[cartProductIndex].quantity = newQuantity;
+    } else {     // add it to cart
+        updatedCartItems.push({
+            productId: product._id, 
+            quantity: newQuantity
+        });
+    }
+
+    const updatedCart = {items: updatedCartItems};
+    this.cart = updatedCart;
+    return this.save();
+}
+
+userSchema.methods.removeFromCart = function(productId){
+    const updatedCartItems = this.cart.items.filter(item=>{ // filter out item i don't want
+        return item.productId.toString() !== productId.toString();
+    })
+    this.cart.items = updatedCartItems;
+    return this.save();
+}
+
+userSchema.methods.addOrder = function(){
+    const order = new Order({
+        items: this.cart.items,
+        user: {userId: this._id, email: this.email, name: this.name},
+    })
+    return order.save().then(()=>{
+        this.cart = {items: []};
+        this.save()
+
+    })
+}
+
+module.exports = mongoose.model('User', userSchema);
 // const mongoDb = require('mongodb');
 
 // const getDb = require('../util/database').getDb;
@@ -18,30 +85,7 @@
 
 //   }
 //   addToCart(product){
-//     const cartProductIndex = this.cart.items.findIndex(cp=>{
-//       return cp.productId.toString() ===  product._id.toString()
-//     });
-//     let newQuantity = 1;
-//     const updatedCartItems = [...this.cart.items];
-
-//     // if it's in the cart add to quantity
-//     if(cartProductIndex >= 0){
-//       newQuantity = this.cart.items[cartProductIndex].quantity + 1;
-//       updatedCartItems[cartProductIndex].quantity = newQuantity;
-//     } else {     // add it to cart
-//       updatedCartItems.push({
-//         productId: new ObjectId(product._id), 
-//         quantity: newQuantity
-//       });
-//     }
-
-//     const updatedCart = {items: updatedCartItems};
-//     const db = getDb();
-//     return db
-//       .collection('users')
-//       .updateOne({_id: new ObjectId(this._id)}, 
-//       {$set: {cart: updatedCart}} // only overwrite user.cart with updatedCart
-//     );
+    
 //   }
 
 //   getCart(){

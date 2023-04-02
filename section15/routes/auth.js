@@ -12,48 +12,54 @@ router.get('/signup', authController.getSignup);
 
 router.post(
     '/login',
-    body('email')
-        .isEmail()
-        .withMessage('Please enter a valid email.'),
-    body(
-        'password',
-        'Passwords must be alphanumeric and at least 3 characters long.'
-    )
-        .isLength({ min: 3 })
-        .isAlphanumeric(),
+    [
+        body('email')
+            .isEmail()
+            .withMessage('Please enter a valid email.')
+            .normalizeEmail(),
+        body(
+            'password',
+            'Passwords must be alphanumeric and at least 3 characters long.'
+        )
+            .isLength({ min: 3 })
+            .isAlphanumeric()
+            .trim(),
+    ],
     authController.postLogin
 );
 
 router.post(
     '/signup',
-    check('email')
-        .isEmail()
-        .withMessage('Please enter a valid email.')
-        .custom((value, { req }) => {
-            // if(value === 'test@test.com'){
-            //     throw new Error('This email address is forbidden!')
-            // } 
-            // return true
-
-            return User.findOne({ email: value }).then(userDoc => {
-                if (userDoc) { // email exists
-                    return Promise.reject(
-                        'E-Mail exists already, please pick a different one'
-                    );
-                }
+    [
+        check('email')
+            .isEmail()
+            .withMessage('Please enter a valid email.')
+            .custom((value, { req }) => {
+                return User.findOne({ email: value }).then(userDoc => {
+                    if (userDoc) { // email exists
+                        return Promise.reject(
+                            'E-Mail exists already, please pick a different one'
+                        );
+                    }
+                })
             })
-        }),
-    body(
-        'password',
-        'Please enter a password with only numbers and text and at least 3 characters.' // second argument is the new default error message for all validators
-    ).isLength({ min: 3 })
-        .isAlphanumeric(),
-    body('confirmPassword').custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords have to match');
-        }
-        return true;
-    }),
+            .normalizeEmail(),
+        body(
+            'password',
+            'Please enter a password with only numbers and text and at least 3 characters.' // second argument is the new default error message for all validators
+        )
+            .isLength({ min: 3 })
+            .isAlphanumeric()
+            .trim(),
+        body('confirmPassword')
+            .trim()
+            .custom((value, { req }) => {
+                if (value !== req.body.password) {
+                    throw new Error('Passwords have to match');
+                }
+                return true;
+            }),
+    ],
     authController.postSignup);
 
 router.post('/logout', authController.postLogout);
